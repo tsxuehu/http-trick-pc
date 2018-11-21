@@ -7,11 +7,14 @@
     "start": "electron ."
   },
   "repository": "",
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "GitHub",
   "license": "",
   "devDependencies": {
     "electron": "^3.0.4"
+  },
+  "dependencies": {
+    "sudo": "^1.0.3",
+    "sudo-prompt": "^8.2.3"
   }
 }
