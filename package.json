@@ -1,0 +1,17 @@
+{
+  "name": "environment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "",
+  "keywords": [
+  ],
+  "author": "GitHub",
+  "license": "",
+  "devDependencies": {
+    "electron": "^3.0.4"
+  }
+}
