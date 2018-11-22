@@ -1,31 +1,24 @@
-const {spawn} = require('child_process');
-var sudo = require('sudo-prompt');
-var options = {
-    name: 'Electron',
-    cachePassword: true,
-    prompt: 'Password, yo? ',
-    spawnOptions: {/* other options for spawn */}
-};
+const {spawn, exec} = require('child_process');
 
 function startExternalService(ip, port) {
     return new Promise((resolve, reject) => {
-        //  let tun2socks = spawn('tun2socks/main', ['-local-socks-addr', `${ip}:${port}`]);
-        var tun2socks = sudo.exec(`tun2socks/main -local-socks-addr  ${ip}:${port}`, options, (error, stdout, stderr) => {
-            console.log(error, stdout, stderr)
-        });
-        /*tun2socks.stdout.on('data', (data) => {
+        let tun2socks = spawn('tun2socks/main', ['-local-socks-addr', `${ip}:${port}`]);
+
+        tun2socks.stdout.on('data', (data) => {
             let line = data.toString();
             let name = line.split(':')[1];
-            if (false) {
+            if (name) {
                 resolve({ps: tun2socks, tun: name.trim()})
             } else {
+                console.log('output not expect: ' + data);
                 reject({ps: tun2socks, msg: 'output not expect: ' + data});
             }
-        });*/
+        });
     })
 }
 
 function stopExternalService(ps) {
+    if (!ps) return;
     return new Promise((resolve, reject) => {
         try {
             ps.kill('SIGHUP');
@@ -33,9 +26,22 @@ function stopExternalService(ps) {
                 resolve();
             })
         } catch (e) {
-            console.log(e)
+            console.log('stop external failed', e)
         }
 
+    })
+}
+
+function execp(cmd) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            console.log(error, stdout, stderr)
+            if (error) {
+                reject({error, stdout, stderr});
+            } else {
+                resolve({error, stdout, stderr});
+            }
+        })
     })
 }
 
@@ -44,6 +50,7 @@ class Tun2Socks {
         this.ip = ip;
         this.port = port;
         // 启动服务进程
+        console.log('start external service')
         if (this.ps) {
             await stopExternalService(ps);
         }
@@ -52,17 +59,24 @@ class Tun2Socks {
             this.ps = ps;
             this.tunName = tun;
         } catch (e) {
-            if (e.ps) {
-                await  stopExternalService(e.ps);
-            }
+            await  stopExternalService(e.ps);
+            return
         }
         // 设置路由表
+
+        let cmd = `route add -net 192.18.0.1/16 -interface ${this.tunName}`
+        console.log('change route', cmd)
+        await execp(cmd);
+        console.log('started tun2socks')
     }
 
-    stop() {
+    async stop() {
         // 删除路由表
-
+        console.log('delete route')
+        await exec(`route delete -net 192.18.0.1/16 -interface ${this.tunName}`);
         // 停止进程
+        console.log('stop external service')
+        await  stopExternalService(this.ps);
     }
 
 
