@@ -65,12 +65,16 @@ class Tun2Socks {
         // 设置路由表
 
         let cmd = `route add -net 192.18.0.1/16 -interface ${this.tunName}`
-        console.log('change route', cmd)
+        console.log('change route')
         await execp(cmd);
+        // 设置dns
+
         console.log('started tun2socks')
     }
 
     async stop() {
+        // 恢复dns
+
         // 删除路由表
         console.log('delete route')
         await exec(`route delete -net 192.18.0.1/16 -interface ${this.tunName}`);
@@ -78,8 +82,6 @@ class Tun2Socks {
         console.log('stop external service')
         await  stopExternalService(this.ps);
     }
-
-
 }
 
 let tun2socks = module.exports = new Tun2Socks();
